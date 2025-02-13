@@ -1075,30 +1075,36 @@ module.exports = {
                     .split(">").join("&gt;")
     },
 
-    "saveMp4": function(id, callback, extended) {
-        this.saveMp4_android(id, (() => {
-            callback(`../assets/${id}`)
-        }))
-        /*let targetFilePath = `../assets/${id}.mp4`
-        let writeStream = fs.createWriteStream(targetFilePath)
-        writeStream.on("finish", () => {
-            callback(targetFilePath.replace(".mp4", ""))
-        })
-    
-        ytdl(`https://youtube.com/watch?v=${id}`, {
-            "quality": 18
-        })
-        .on("error", (error) => {
-            if(extended) {
-                callback(error)
+"saveMp4": function(id, callback, extended) { 
+    const path = require('path'); 
+    const { spawn } = require('child_process');
+
+    let targetFilePath = path.join('../assets', `${id}.mp4`);
+
+    // Spawn yt-dlp 
+    const dl = spawn('yt-dlp', [
+        `https://youtube.com/watch?v=${id}`,
+        '-f', '18',            // 360p MP4
+        '-o', targetFilePath   // Output file path
+    ]);
+
+
+    // When the child process finishes
+    dl.on('close', (code) => {
+        console.log("yt-dlp finished download with code:", code);
+        if (code === 0) {
+            // this is what this func originally did idk
+            callback(targetFilePath.replace('.mp4', ''));
+        } else {
+            // If there was an error
+            if (extended) {
+                callback(new Error(`yt-dlp exited with code ${code}`));
             } else {
-                callback(false)
+                callback(false);
             }
-            writeStream.close()
-            return;
-        })
-        .pipe(writeStream)*/
-    },
+        }
+    });
+},
 
     "testF18": function(url, callback) {
         const newHeaders = { ...androidHeaders };
